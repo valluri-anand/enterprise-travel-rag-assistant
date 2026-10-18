@@ -15,27 +15,30 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 
 ```mermaid
 graph TD
-    subgraph Data Ingestion & Enrichment
-        A[Unstructured Travel Docs / PDFs / Itineraries] --> B[Azure Cognitive Skillset]
-        B --> B1[OCR Skill: Scanned Imagery]
-        B --> B2[Entity Recognition: Locations, Transit, Dates]
-        B --> B3[Keyphrase Extraction]
-        B1 & B2 & B3 --> C[Hierarchical Document Chunking]
-        C --> D[(Azure AI Search: Hybrid Vector + BM25)]
+    subgraph Ingestion["Data Ingestion & Enrichment"]
+        A["Unstructured Travel Docs / PDFs / Itineraries"] --> B["Azure Cognitive Skillset"]
+        B --> B1["OCR Skill: Scanned Imagery"]
+        B --> B2["Entity Recognition: Locations, Transit, Dates"]
+        B --> B3["Keyphrase Extraction"]
+        B1 --> C["Hierarchical Document Chunking"]
+        B2 --> C
+        B3 --> C
+        C --> D[("Azure AI Search: Hybrid Vector + BM25")]
     end
 
-    subgraph Runtime Query & Synthesis
-        E[User Query via Web UI] --> F[FastAPI / Flask Gateway]
-        F --> G[Security Guardrails: Injection Shielding & Sanitization]
-        G --> H[Vector Embedding text-embedding-3-small]
-        H & G --> D
-        D --> I[Azure Semantic Reranker]
-        I --> J[Azure OpenAI GPT-4o Synthesis]
-        J --> K[Grounded Output + Verified Document Citations]
+    subgraph Runtime["Runtime Query & Synthesis"]
+        E["User Query via Web UI"] --> F["FastAPI / Flask Gateway"]
+        F --> G["Security Guardrails: Injection Shielding & Sanitization"]
+        G --> H["Vector Embedding (text-embedding-3-small)"]
+        H --> D
+        G --> D
+        D --> I["Azure Semantic Reranker"]
+        I --> J["Azure OpenAI GPT-4o Synthesis"]
+        J --> K["Grounded Output + Verified Document Citations"]
     end
 
-    subgraph Evaluation & Observability
-        K --> L[RAGAS Evaluation: Faithfulness 94% | Relevancy 93%]
+    subgraph Evaluation["Evaluation & Observability"]
+        K --> L["RAGAS Evaluation: Faithfulness 94% - Relevancy 93%"]
     end
 ```
 
