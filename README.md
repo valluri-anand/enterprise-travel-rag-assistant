@@ -23,66 +23,57 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 
 ```mermaid
 flowchart TD
-    %% 1. Presentation Tier
-    subgraph Tier_Client["🌐 1. Client & Presentation Tier"]
+    %% Offline Ingestion
+    subgraph Ingestion["🔄 Offline Data Ingestion & Cognitive Enrichment"]
+        Docs[("📁 Unstructured Travel Documents (PDFs, Images, Schedules)")]
+        Skillset["🏷️ Azure Cognitive Skillsets (OCR, Entity Recognition, Keyphrases)"]
+        Index[("🔍 Azure AI Search (Hybrid: Dense Vectors + BM25 + Semantic Ranker)")]
+
+        Docs -->|"Extract & Enrich"| Skillset
+        Skillset -->|"Index Chunks & Vectors"| Index
+    end
+
+    %% Client & User
+    subgraph Client["🌐 Client & Presentation Tier"]
         User(["👤 User / Traveler"])
         UI["🖥️ Web Client (HTML5 / Tailwind CSS / Marked.js)"]
-        User <-->|"1. Submits Queries & Views Guidance"| UI
+        User <-->|"1. Submits Question & Views Guidance"| UI
     end
 
-    %% 2. Flask Application Tier
-    subgraph Tier_Flask["⚡ 2. Application Server Tier (Flask & Gunicorn)"]
-        FlaskServer["🌐 Flask REST API (src/web/app.py)"]
-        Guardrails["🛡️ Query Guardrails & Sanitizer (src/core/security.py)"]
-        Config["⚙️ Configuration & Environment Settings (src/core/config.py)"]
-
-        UI -->|"2. POST /api/query"| FlaskServer
-        FlaskServer -->|"3. Validate Input"| Guardrails
-        Guardrails -->|"4. Sanitized Payload"| FlaskServer
-        Config -.->|"Injects Settings"| FlaskServer
-    end
-
-    %% 3. Core RAG & Hybrid Retrieval Tier
-    subgraph Tier_Core["🧠 3. Core RAG & Hybrid Retrieval Tier"]
+    %% Flask Application Tier
+    subgraph AppTier["⚡ Flask Application Controller (src/web/app.py)"]
+        Flask["🌐 Flask App Controller (src/web/app.py)"]
+        Guardrails["🛡️ Input Guardrails & Sanitizer (src/core/security.py)"]
+        SearchClient["🔍 Azure Search Client (src/core/search_client.py)"]
         RAGEngine["🧠 RAG Synthesis Engine (src/core/rag_engine.py)"]
-        SearchService["🔍 Azure Hybrid Search Client (src/core/search_client.py)"]
-        
-        FlaskServer -->|"5. Search Context"| SearchService
-        SearchService -->|"6. Candidates + Citations"| RAGEngine
+
+        UI -->|"2. POST /api/query"| Flask
+        Flask <-->|"3. Validate & Sanitize Input"| Guardrails
+        Flask -->|"4. Request Context Chunks"| SearchClient
+        Flask -->|"7. Send Context & User Query"| RAGEngine
+        Flask -->|"10. JSON Response with Citations"| UI
     end
 
-    %% 4. Azure Cloud AI Services
-    subgraph Tier_Azure["☁️ 4. Azure Cloud AI Infrastructure"]
-        SearchIndex[("🔍 Azure AI Search (Dense Vectors + BM25 + Semantic Ranker)")]
+    %% Azure Cloud AI Infrastructure
+    subgraph CloudAI["☁️ Azure Cloud AI Services"]
         AzureOpenAI["🤖 Azure OpenAI Service (GPT-4o & text-embedding-3-small)"]
-
-        SearchService <-->|"7a. Vector & Keyword Queries"| SearchIndex
-        SearchService <-->|"7b. text-embedding-3-small Embeddings"| AzureOpenAI
-        RAGEngine <-->|"8. Grounded Prompt & Citation Synthesis"| AzureOpenAI
-    end
-
-    %% 5. Cognitive Ingestion Pipeline
-    subgraph Tier_Ingestion["🔄 5. Cognitive Ingestion Pipeline (src/ingestion/indexer.py)"]
-        Indexer["📑 Index Schema & Cognitive Skillset Definition"]
-        Skills["🏷️ Skillsets: OCR + Entity Recognition + Keyphrases"]
         
-        Indexer --> Skills
-        Skills -.->|"Configures Schema & Enrichment"| SearchIndex
+        SearchClient <-->|"5a. Generate Query Embeddings"| AzureOpenAI
+        SearchClient <-->|"5b. Hybrid Retrieval (Vector + BM25 + Semantic Rerank)"| Index
+        SearchClient -->|"6. Return Top-K Ranked Context Chunks"| Flask
+
+        RAGEngine <-->|"8. Grounded Prompt & Chat Completion"| AzureOpenAI
+        RAGEngine -->|"9. Return Synthesized Answer + Citations"| Flask
     end
 
-    %% 6. Quality & Evaluation Tier
-    subgraph Tier_Quality["🧪 6. Testing & Evaluation Tier"]
-        Benchmark["📊 RAGAS Benchmark Suite (eval/benchmark_ragas.py)"]
-        UnitTests["🧪 Pytest Test Suite (tests/)"]
+    %% Quality & Evaluation Tier
+    subgraph Quality["🧪 Evaluation & Quality Gate"]
+        RAGAS["📊 RAGAS Benchmark Suite (eval/benchmark_ragas.py)"]
+        Pytest["🧪 Pytest Test Suite (tests/)"]
 
-        RAGEngine -.->|"Validates Groundedness 94.2%"| Benchmark
-        SearchService -.->|"Validates Hybrid Retrieval"| UnitTests
+        Flask -.->|"Offline Evaluation & Benchmarks"| RAGAS
+        Flask -.->|"CI/CD Test Runner"| Pytest
     end
-
-    %% Return Path
-    RAGEngine -->|"9. Synthesized Response & Verified Citations"| FlaskServer
-    FlaskServer -->|"10. JSON Response Payload"| UI
-    UI -->|"11. Rendered Markdown Response with Citations"| User
 ```
 
 ---
