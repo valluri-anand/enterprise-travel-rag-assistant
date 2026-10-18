@@ -22,40 +22,81 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 ## 🏛️ System Architecture
 
 ```mermaid
-graph TD
-    subgraph Ingestion["Data Ingestion & Enrichment"]
-        A["Unstructured Travel Docs / PDFs / Itineraries"] --> B["Azure Cognitive Skillset"]
-        B --> B1["OCR Skill: Scanned Imagery"]
-        B --> B2["Entity Recognition: Locations, Transit, Dates"]
-        B --> B3["Keyphrase Extraction"]
-        B1 --> C["Hierarchical Document Chunking"]
-        B2 --> C
-        B3 --> C
-        C --> D[("Azure AI Search: Hybrid Vector + BM25")]
-    end
-
-    subgraph Client["Client Interface"]
+flowchart TD
+    %% 1. Client Tier
+    subgraph Tier_Client["🌐 1. Client & Presentation Tier"]
         User(["👤 User / Traveler"])
+        UI["🖥️ Web Client (Responsive SPA / Tailwind UI)"]
+        User <-->|"1. HTTPS Interactions"| UI
     end
 
-    subgraph Runtime["Runtime Query & Synthesis"]
-        E["User Query via Web UI"] --> F["FastAPI / Flask Gateway"]
-        F --> G["Security Guardrails: Injection Shielding & Sanitization"]
-        G --> H["Vector Embedding (text-embedding-3-small)"]
-        H --> D
-        G --> D
-        D --> I["Azure Semantic Reranker"]
-        I --> J["Azure OpenAI GPT-4o Synthesis"]
-        J --> K["Grounded Output + Verified Document Citations"]
-        K -->|"Rendered Response & Citations"| E
+    %% 2. Ingress & Security Tier
+    subgraph Tier_Ingress["🛡️ 2. Ingress & Security Gateway"]
+        APIGateway["🚪 Azure API Management / App Gateway"]
+        Guardrails["🛡️ LLM Guardrails: Input Sanitizer & Injection Shield"]
+        UI -->|"2. POST /api/query (TLS 1.3)"| APIGateway
+        APIGateway -->|"3. Authenticated Payload"| Guardrails
     end
 
-    User -->|"1. Submits Travel Query"| E
-    E -->|"2. Displays Verified Guidance"| User
-
-    subgraph Evaluation["Evaluation & Observability"]
-        K --> L["RAGAS Evaluation: Faithfulness 94% - Relevancy 93%"]
+    %% 3. Application & Orchestration Tier
+    subgraph Tier_Orchestration["⚙️ 3. Application & Orchestration Tier"]
+        Orchestrator["🧠 RAG Orchestration Engine (FastAPI)"]
+        Cache[("⚡ Semantic Query Cache (Redis / Memory)")]
+        Guardrails -->|"4. Sanitized Query"| Orchestrator
+        Orchestrator <-->|"5. Check Cache Hit / Miss"| Cache
     end
+
+    %% 4. Async Ingestion & Cognitive Enrichment Pipeline
+    subgraph Tier_Ingestion["🔄 4. Async Ingestion & Cognitive Enrichment Pipeline"]
+        RawDocs[("📁 Azure Blob Storage (PDFs, Images, Schedules)")]
+        DocIntelligence["👁️ Azure AI Document Intelligence (OCR)"]
+        Skillset["🏷️ Cognitive Skillsets (NER, Keyphrases)"]
+        Chunker["✂️ Hierarchical Markdown Chunking Engine"]
+        Embedder["🔢 Embedding Generator (text-embedding-3-small)"]
+
+        RawDocs -->|"Blob Event Trigger"| DocIntelligence
+        DocIntelligence --> Skillset
+        Skillset --> Chunker
+        Chunker --> Embedder
+    end
+
+    %% 5. Hybrid Search & Knowledge Retrieval Tier
+    subgraph Tier_Search["🔍 5. Hybrid Retrieval Engine (Azure AI Search)"]
+        HNSW[("🔢 Dense Vector Store (HNSW Cosine)")]
+        BM25[("📑 Keyword Inverted Index (BM25)")]
+        Reranker["⚡ Azure Semantic Reranker L2"]
+
+        Embedder -->|"Sync Vectors"| HNSW
+        Chunker -->|"Text Tokens"| BM25
+        Orchestrator -->|"6a. Dense Vector Search"| HNSW
+        Orchestrator -->|"6b. Keyword Match"| BM25
+        HNSW -->|"Vector Matches"| Reranker
+        BM25 -->|"Keyword Matches"| Reranker
+    end
+
+    %% 6. Foundation Model & LLM Inference Tier
+    subgraph Tier_LLM["🤖 6. Foundation Model & LLM Inference Tier"]
+        AOAI["🧠 Azure OpenAI Service (GPT-4o)"]
+        Safety["🛡️ Azure Content Safety & Groundedness Policy"]
+        
+        Reranker -->|"7. Top-K Ranked Context Chunks"| Orchestrator
+        Orchestrator -->|"8. Grounded Prompt with Citations"| AOAI
+        AOAI --> Safety
+        Safety -->|"9. Verified Synthesized Answer"| Orchestrator
+    end
+
+    %% 7. Telemetry & Continuous Evaluation Tier
+    subgraph Tier_Telemetry["📊 7. Observability & Continuous Evaluation"]
+        AppInsights["📈 Azure Application Insights (Distributed Tracing & Spans)"]
+        RAGASEval["🧪 RAGAS Automated Eval Pipeline (Faithfulness 94%, Relevancy 93%)"]
+        Orchestrator -.->|"Async Metrics & Traces"| AppInsights
+        Orchestrator -.->|"Sampled Production Logs"| RAGASEval
+    end
+
+    %% Return Path to User
+    Orchestrator -->|"10. JSON Payload + Citations [1][2]"| APIGateway
+    APIGateway -->|"11. Rendered Markdown Response"| UI
+    UI -->|"12. Displays Verified Travel Guidance"| User
 ```
 
 ---
