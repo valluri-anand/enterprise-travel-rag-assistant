@@ -10,6 +10,14 @@
 An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered to index multi-modal unstructured travel documentation (advisories, transit schedules, PDFs, images) using **Azure AI Search** cognitive skillsets and synthesize context-grounded recommendations via **Azure OpenAI (GPT-4o)** with verified citations.
 
 ---
+## 🖥️ Web Application Interface
+
+<p align="center">
+  <img src="assets/ui-preview.jpg" width="100%" alt="Travel Intelligence RAG Web UI Preview" />
+</p>
+
+---
+
 
 ## 🏛️ System Architecture
 
@@ -45,13 +53,6 @@ graph TD
 
 ---
 
-## 🖥️ Web Application Interface
-
-<p align="center">
-  <img src="assets/ui-preview.jpg" width="100%" alt="Travel Intelligence RAG Web UI Preview" />
-</p>
-
----
 
 ## 🚀 Key Technical Highlights
 
