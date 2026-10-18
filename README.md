@@ -23,8 +23,6 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 
 ```mermaid
 graph TD
-    User(["👤 User / Traveler"])
-
     subgraph Ingestion["Data Ingestion & Enrichment"]
         A["Unstructured Travel Docs / PDFs / Itineraries"] --> B["Azure Cognitive Skillset"]
         B --> B1["OCR Skill: Scanned Imagery"]
@@ -34,6 +32,10 @@ graph TD
         B2 --> C
         B3 --> C
         C --> D[("Azure AI Search: Hybrid Vector + BM25")]
+    end
+
+    subgraph Client["Client Interface"]
+        User(["👤 User / Traveler"])
     end
 
     subgraph Runtime["Runtime Query & Synthesis"]
@@ -48,8 +50,8 @@ graph TD
         K -->|"Rendered Response & Citations"| E
     end
 
-    User -->|"Asks Query via Web UI"| E
-    E -->|"Displays Verified Travel Guidance"| User
+    User -->|"1. Submits Travel Query"| E
+    E -->|"2. Displays Verified Guidance"| User
 
     subgraph Evaluation["Evaluation & Observability"]
         K --> L["RAGAS Evaluation: Faithfulness 94% - Relevancy 93%"]
