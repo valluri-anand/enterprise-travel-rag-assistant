@@ -35,6 +35,7 @@ graph TD
         D --> I["Azure Semantic Reranker"]
         I --> J["Azure OpenAI GPT-4o Synthesis"]
         J --> K["Grounded Output + Verified Document Citations"]
+        K -->|"Rendered Answer & Citations"| E
     end
 
     subgraph Evaluation["Evaluation & Observability"]
