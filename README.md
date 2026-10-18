@@ -23,57 +23,47 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 
 ```mermaid
 flowchart TD
-    %% Offline Ingestion
-    subgraph Ingestion["🔄 Offline Data Ingestion & Cognitive Enrichment"]
-        Docs[("📁 Unstructured Travel Documents (PDFs, Images, Schedules)")]
-        Skillset["🏷️ Azure Cognitive Skillsets (OCR, Entity Recognition, Keyphrases)"]
-        Index[("🔍 Azure AI Search (Hybrid: Dense Vectors + BM25 + Semantic Ranker)")]
-
-        Docs -->|"Extract & Enrich"| Skillset
-        Skillset -->|"Index Chunks & Vectors"| Index
+    %% Left: Customer / User & Search App
+    subgraph ClientSection["Client Application"]
+        Customer(["👤 Customer / User"])
+        WebApp["Travel Search App\n(Flask / Python)"]
     end
 
-    %% Client & User
-    subgraph Client["🌐 Client & Presentation Tier"]
-        User(["👤 User / Traveler"])
-        UI["🖥️ Web Client (HTML5 / Tailwind CSS / Marked.js)"]
-        User <-->|"1. Submits Question & Views Guidance"| UI
+    %% Right: RAG Data Ingestion Pipeline
+    subgraph IngestionPipeline["RAG Data Ingestion Pipeline (Azure AI Search)"]
+        RawDocs["Reviews & Brochures\n(PDF / Images)"]
+        BlobStore[("Azure Blob Storage\n(Data Source)")]
+        Skillset["Cognitive Skillset\n(OCR, NER, Keyphrases)"]
+        Indexer["Indexer"]
+        IndexingEngine["Indexing Engine"]
+        CompanyData[("Company Data Index\n(Azure AI Search)")]
+
+        RawDocs -->|"Upload"| BlobStore
+        BlobStore --> Skillset
+        Skillset --> Indexer
+        Indexer --> IndexingEngine
+        IndexingEngine --> CompanyData
     end
 
-    %% Flask Application Tier
-    subgraph AppTier["⚡ Flask Application Controller (src/web/app.py)"]
-        Flask["🌐 Flask App Controller (src/web/app.py)"]
-        Guardrails["🛡️ Input Guardrails & Sanitizer (src/core/security.py)"]
-        SearchClient["🔍 Azure Search Client (src/core/search_client.py)"]
-        RAGEngine["🧠 RAG Synthesis Engine (src/core/rag_engine.py)"]
+    %% Bottom: Retrieval & LLM Generation Loop
+    subgraph RetrievalGeneration["RAG Retrieval & LLM Generation"]
+        Retrieval["Keyword Similarity & Hybrid Search\n(BM25 + Dense Vectors)"]
+        Context["Retrieved Contextual Data\n(Top-K Chunks)"]
+        Prompt["System Prompt &\nGuardrails"]
+        LLM["Azure OpenAI LLM\n(GPT-4o)"]
+        Response["Response\n(with Citations)"]
 
-        UI -->|"2. POST /api/query"| Flask
-        Flask <-->|"3. Validate & Sanitize Input"| Guardrails
-        Flask -->|"4. Request Context Chunks"| SearchClient
-        Flask -->|"7. Send Context & User Query"| RAGEngine
-        Flask -->|"10. JSON Response with Citations"| UI
+        CompanyData -->|"Index Query"| Retrieval
+        Retrieval --> Context
+        Context --> LLM
+        Prompt --> LLM
+        LLM --> Response
     end
 
-    %% Azure Cloud AI Infrastructure
-    subgraph CloudAI["☁️ Azure Cloud AI Services"]
-        AzureOpenAI["🤖 Azure OpenAI Service (GPT-4o & text-embedding-3-small)"]
-        
-        SearchClient <-->|"5a. Generate Query Embeddings"| AzureOpenAI
-        SearchClient <-->|"5b. Hybrid Retrieval (Vector + BM25 + Semantic Rerank)"| Index
-        SearchClient -->|"6. Return Top-K Ranked Context Chunks"| Flask
-
-        RAGEngine <-->|"8. Grounded Prompt & Chat Completion"| AzureOpenAI
-        RAGEngine -->|"9. Return Synthesized Answer + Citations"| Flask
-    end
-
-    %% Quality & Evaluation Tier
-    subgraph Quality["🧪 Evaluation & Quality Gate"]
-        RAGAS["📊 RAGAS Benchmark Suite (eval/benchmark_ragas.py)"]
-        Pytest["🧪 Pytest Test Suite (tests/)"]
-
-        Flask -.->|"Offline Evaluation & Benchmarks"| RAGAS
-        Flask -.->|"CI/CD Test Runner"| Pytest
-    end
+    %% Interactive Flow Connections
+    Customer -->|"Question"| WebApp
+    WebApp -->|"Search Query"| CompanyData
+    Response -->|"Grounded Answer"| Customer
 ```
 
 ---
