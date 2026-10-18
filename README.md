@@ -22,14 +22,14 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 ## 🏛️ System Architecture
 
 ```mermaid
-flowchart LR
-    %% Left: Customer / User & Search App
+flowchart TD
+    %% Top: Client Application
     subgraph ClientSection["Client Application"]
         Customer(["👤 Customer / User"])
         WebApp["Enterprise Travel Search App\n(Flask • src/web/app.py)"]
     end
 
-    %% Right: RAG Data Ingestion Pipeline
+    %% Middle: RAG Data Ingestion Pipeline
     subgraph IngestionPipeline["RAG Data Ingestion Pipeline (Azure AI Search)"]
         RawDocs["Unstructured Travel Docs\n(PDFs, Itineraries, Scanned Img)"]
         BlobStore[("Azure Blob Storage\n(travel-docs container)")]
@@ -45,7 +45,7 @@ flowchart LR
         IndexingEngine --> CompanyData
     end
 
-    %% Bottom / Middle: Retrieval & LLM Generation Loop
+    %% Bottom: Retrieval & LLM Generation Loop
     subgraph RetrievalGeneration["RAG Retrieval & LLM Generation"]
         Retrieval["Hybrid Search Engine\n(BM25 + text-embedding-3-small)\n(src/core/search_client.py)"]
         Context["Retrieved Context Chunks\n(Ranked Top-K with Metadata)"]
