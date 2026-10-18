@@ -45,6 +45,14 @@ graph TD
 
 ---
 
+## 🖥️ Web Application Interface
+
+<p align="center">
+  <img src="assets/ui-preview.jpg" width="100%" alt="Travel Intelligence RAG Web UI Preview" />
+</p>
+
+---
+
 ## 🚀 Key Technical Highlights
 
 1. **True Hybrid Search Engine**: Combines **Dense Vector Search** (`text-embedding-3-small`), **BM25 Keyword Matching**, and **Azure Semantic Reranker** into a unified retrieval pipeline.
