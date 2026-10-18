@@ -23,80 +23,66 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 
 ```mermaid
 flowchart TD
-    %% 1. Client Tier
+    %% 1. Presentation Tier
     subgraph Tier_Client["🌐 1. Client & Presentation Tier"]
         User(["👤 User / Traveler"])
-        UI["🖥️ Web Client (Responsive SPA / Tailwind UI)"]
-        User <-->|"1. HTTPS Interactions"| UI
+        UI["🖥️ Web Client (HTML5 / Tailwind CSS / Marked.js)"]
+        User <-->|"1. Submits Queries & Views Guidance"| UI
     end
 
-    %% 2. Ingress & Security Tier
-    subgraph Tier_Ingress["🛡️ 2. Ingress & Security Gateway"]
-        APIGateway["🚪 Azure API Management / App Gateway"]
-        Guardrails["🛡️ LLM Guardrails: Input Sanitizer & Injection Shield"]
-        UI -->|"2. POST /api/query (TLS 1.3)"| APIGateway
-        APIGateway -->|"3. Authenticated Payload"| Guardrails
+    %% 2. Flask Application Tier
+    subgraph Tier_Flask["⚡ 2. Application Server Tier (Flask & Gunicorn)"]
+        FlaskServer["🌐 Flask REST API (src/web/app.py)"]
+        Guardrails["🛡️ Query Guardrails & Sanitizer (src/core/security.py)"]
+        Config["⚙️ Configuration & Environment Settings (src/core/config.py)"]
+
+        UI -->|"2. POST /api/query"| FlaskServer
+        FlaskServer -->|"3. Validate Input"| Guardrails
+        Guardrails -->|"4. Sanitized Payload"| FlaskServer
+        Config -.->|"Injects Settings"| FlaskServer
     end
 
-    %% 3. Application & Orchestration Tier
-    subgraph Tier_Orchestration["⚙️ 3. Application & Orchestration Tier"]
-        Orchestrator["🧠 RAG Orchestration Engine (FastAPI)"]
-        Cache[("⚡ Semantic Query Cache (Redis / Memory)")]
-        Guardrails -->|"4. Sanitized Query"| Orchestrator
-        Orchestrator <-->|"5. Check Cache Hit / Miss"| Cache
-    end
-
-    %% 4. Async Ingestion & Cognitive Enrichment Pipeline
-    subgraph Tier_Ingestion["🔄 4. Async Ingestion & Cognitive Enrichment Pipeline"]
-        RawDocs[("📁 Azure Blob Storage (PDFs, Images, Schedules)")]
-        DocIntelligence["👁️ Azure AI Document Intelligence (OCR)"]
-        Skillset["🏷️ Cognitive Skillsets (NER, Keyphrases)"]
-        Chunker["✂️ Hierarchical Markdown Chunking Engine"]
-        Embedder["🔢 Embedding Generator (text-embedding-3-small)"]
-
-        RawDocs -->|"Blob Event Trigger"| DocIntelligence
-        DocIntelligence --> Skillset
-        Skillset --> Chunker
-        Chunker --> Embedder
-    end
-
-    %% 5. Hybrid Search & Knowledge Retrieval Tier
-    subgraph Tier_Search["🔍 5. Hybrid Retrieval Engine (Azure AI Search)"]
-        HNSW[("🔢 Dense Vector Store (HNSW Cosine)")]
-        BM25[("📑 Keyword Inverted Index (BM25)")]
-        Reranker["⚡ Azure Semantic Reranker L2"]
-
-        Embedder -->|"Sync Vectors"| HNSW
-        Chunker -->|"Text Tokens"| BM25
-        Orchestrator -->|"6a. Dense Vector Search"| HNSW
-        Orchestrator -->|"6b. Keyword Match"| BM25
-        HNSW -->|"Vector Matches"| Reranker
-        BM25 -->|"Keyword Matches"| Reranker
-    end
-
-    %% 6. Foundation Model & LLM Inference Tier
-    subgraph Tier_LLM["🤖 6. Foundation Model & LLM Inference Tier"]
-        AOAI["🧠 Azure OpenAI Service (GPT-4o)"]
-        Safety["🛡️ Azure Content Safety & Groundedness Policy"]
+    %% 3. Core RAG & Hybrid Retrieval Tier
+    subgraph Tier_Core["🧠 3. Core RAG & Hybrid Retrieval Tier"]
+        RAGEngine["🧠 RAG Synthesis Engine (src/core/rag_engine.py)"]
+        SearchService["🔍 Azure Hybrid Search Client (src/core/search_client.py)"]
         
-        Reranker -->|"7. Top-K Ranked Context Chunks"| Orchestrator
-        Orchestrator -->|"8. Grounded Prompt with Citations"| AOAI
-        AOAI --> Safety
-        Safety -->|"9. Verified Synthesized Answer"| Orchestrator
+        FlaskServer -->|"5. Search Context"| SearchService
+        SearchService -->|"6. Candidates + Citations"| RAGEngine
     end
 
-    %% 7. Telemetry & Continuous Evaluation Tier
-    subgraph Tier_Telemetry["📊 7. Observability & Continuous Evaluation"]
-        AppInsights["📈 Azure Application Insights (Distributed Tracing & Spans)"]
-        RAGASEval["🧪 RAGAS Automated Eval Pipeline (Faithfulness 94%, Relevancy 93%)"]
-        Orchestrator -.->|"Async Metrics & Traces"| AppInsights
-        Orchestrator -.->|"Sampled Production Logs"| RAGASEval
+    %% 4. Azure Cloud AI Services
+    subgraph Tier_Azure["☁️ 4. Azure Cloud AI Infrastructure"]
+        SearchIndex[("🔍 Azure AI Search (Dense Vectors + BM25 + Semantic Ranker)")]
+        AzureOpenAI["🤖 Azure OpenAI Service (GPT-4o & text-embedding-3-small)"]
+
+        SearchService <-->|"7a. Vector & Keyword Queries"| SearchIndex
+        SearchService <-->|"7b. text-embedding-3-small Embeddings"| AzureOpenAI
+        RAGEngine <-->|"8. Grounded Prompt & Citation Synthesis"| AzureOpenAI
     end
 
-    %% Return Path to User
-    Orchestrator -->|"10. JSON Payload + Citations [1][2]"| APIGateway
-    APIGateway -->|"11. Rendered Markdown Response"| UI
-    UI -->|"12. Displays Verified Travel Guidance"| User
+    %% 5. Cognitive Ingestion Pipeline
+    subgraph Tier_Ingestion["🔄 5. Cognitive Ingestion Pipeline (src/ingestion/indexer.py)"]
+        Indexer["📑 Index Schema & Cognitive Skillset Definition"]
+        Skills["🏷️ Skillsets: OCR + Entity Recognition + Keyphrases"]
+        
+        Indexer --> Skills
+        Skills -.->|"Configures Schema & Enrichment"| SearchIndex
+    end
+
+    %% 6. Quality & Evaluation Tier
+    subgraph Tier_Quality["🧪 6. Testing & Evaluation Tier"]
+        Benchmark["📊 RAGAS Benchmark Suite (eval/benchmark_ragas.py)"]
+        UnitTests["🧪 Pytest Test Suite (tests/)"]
+
+        RAGEngine -.->|"Validates Groundedness 94.2%"| Benchmark
+        SearchService -.->|"Validates Hybrid Retrieval"| UnitTests
+    end
+
+    %% Return Path
+    RAGEngine -->|"9. Synthesized Response & Verified Citations"| FlaskServer
+    FlaskServer -->|"10. JSON Response Payload"| UI
+    UI -->|"11. Rendered Markdown Response with Citations"| User
 ```
 
 ---
