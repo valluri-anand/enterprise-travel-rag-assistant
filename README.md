@@ -26,7 +26,7 @@ flowchart TD
     %% Top: Client Application
     subgraph ClientSection["Client Application"]
         Customer(["👤 Customer / User"])
-        WebApp["Enterprise Travel Search App\n(Flask • src/web/app.py)"]
+        WebApp["Enterprise Travel Search App\n(Flask Web UI & /api/query API)\n(src/web/app.py)"]
     end
 
     %% Middle: RAG Data Ingestion Pipeline
@@ -34,7 +34,7 @@ flowchart TD
         RawDocs["Unstructured Travel Docs\n(PDFs, Itineraries, Scanned Img)"]
         BlobStore[("Azure Blob Storage\n(travel-docs container)")]
         Skillset["Cognitive Skillsets\n(OCR, NER, Keyphrases)\n(src/ingestion/indexer.py)"]
-        Indexer["Azure Search Indexer\n(travel-indexer)"]
+        Indexer["Azure Search Indexer\n(travel-indexer • Auto-Sync)"]
         IndexingEngine["HNSW Vector & Inverted Index\n(Cosine Metric • 1536 dims)"]
         CompanyData[("Azure AI Search Index\ntravel-intelligence-index")]
 
@@ -47,11 +47,11 @@ flowchart TD
 
     %% Bottom: Retrieval & LLM Generation Loop
     subgraph RetrievalGeneration["RAG Retrieval & LLM Generation"]
-        Retrieval["Hybrid Search Engine\n(BM25 + text-embedding-3-small)\n(src/core/search_client.py)"]
-        Context["Retrieved Context Chunks\n(Ranked Top-K with Metadata)"]
-        Prompt["System Prompt & Guardrails\n(src/core/security.py)"]
-        LLM["Azure OpenAI GPT-4o\n(src/core/rag_engine.py)"]
-        Response["Grounded Response\nwith Citations [1][2]"]
+        Retrieval["Hybrid Search & Semantic Reranking\n(BM25 + text-embedding-3-small + L2 Reranker)\n(src/core/search_client.py)"]
+        Context["Retrieved Context Chunks\n(Ranked Top-K • Metadata & Citations)"]
+        Prompt["System Prompt & Defensive Guardrails\n(Grounding Rules • Injection Shield)\n(src/core/security.py)"]
+        LLM["Azure OpenAI GPT-4o\n(Context-Grounded Synthesis)\n(src/core/rag_engine.py)"]
+        Response["Grounded Response\n(Verified Citations [1][2] • Latency SLA)\n(src/web/templates/index.html)"]
 
         Retrieval --> Context
         Context --> LLM
