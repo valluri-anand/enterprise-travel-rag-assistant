@@ -22,7 +22,7 @@ An enterprise-grade **Retrieval-Augmented Generation (RAG) platform** engineered
 ## 🏛️ System Architecture
 
 ```mermaid
-flowchart TD
+flowchart LR
     %% Left: Customer / User & Search App
     subgraph ClientSection["Client Application"]
         Customer(["👤 Customer / User"])
@@ -45,7 +45,7 @@ flowchart TD
         IndexingEngine --> CompanyData
     end
 
-    %% Bottom: Retrieval & LLM Generation Loop
+    %% Bottom / Middle: Retrieval & LLM Generation Loop
     subgraph RetrievalGeneration["RAG Retrieval & LLM Generation"]
         Retrieval["Hybrid Search Engine\n(BM25 + text-embedding-3-small)\n(src/core/search_client.py)"]
         Context["Retrieved Context Chunks\n(Ranked Top-K with Metadata)"]
@@ -53,7 +53,6 @@ flowchart TD
         LLM["Azure OpenAI GPT-4o\n(src/core/rag_engine.py)"]
         Response["Grounded Response\nwith Citations [1][2]"]
 
-        CompanyData -->|"Semantic Candidate Match"| Retrieval
         Retrieval --> Context
         Context --> LLM
         Prompt --> LLM
@@ -63,6 +62,7 @@ flowchart TD
     %% Interactive Flow Connections
     Customer -->|"Question via UI"| WebApp
     WebApp -->|"Hybrid Query Request"| CompanyData
+    CompanyData -->|"Semantic Candidate Match"| Retrieval
     Response -->|"Grounded Answer with Citations"| Customer
 ```
 
