@@ -26,19 +26,19 @@ flowchart TD
     %% Left: Customer / User & Search App
     subgraph ClientSection["Client Application"]
         Customer(["👤 Customer / User"])
-        WebApp["Travel Search App\n(Flask / Python)"]
+        WebApp["Enterprise Travel Search App\n(Flask • src/web/app.py)"]
     end
 
     %% Right: RAG Data Ingestion Pipeline
     subgraph IngestionPipeline["RAG Data Ingestion Pipeline (Azure AI Search)"]
-        RawDocs["Reviews & Brochures\n(PDF / Images)"]
-        BlobStore[("Azure Blob Storage\n(Data Source)")]
-        Skillset["Cognitive Skillset\n(OCR, NER, Keyphrases)"]
-        Indexer["Indexer"]
-        IndexingEngine["Indexing Engine"]
-        CompanyData[("Company Data Index\n(Azure AI Search)")]
+        RawDocs["Unstructured Travel Docs\n(PDFs, Itineraries, Scanned Img)"]
+        BlobStore[("Azure Blob Storage\n(travel-docs container)")]
+        Skillset["Cognitive Skillsets\n(OCR, NER, Keyphrases)\n(src/ingestion/indexer.py)"]
+        Indexer["Azure Search Indexer\n(travel-indexer)"]
+        IndexingEngine["HNSW Vector & Inverted Index\n(Cosine Metric • 1536 dims)"]
+        CompanyData[("Azure AI Search Index\ntravel-intelligence-index")]
 
-        RawDocs -->|"Upload"| BlobStore
+        RawDocs -->|"Ingest"| BlobStore
         BlobStore --> Skillset
         Skillset --> Indexer
         Indexer --> IndexingEngine
@@ -47,13 +47,13 @@ flowchart TD
 
     %% Bottom: Retrieval & LLM Generation Loop
     subgraph RetrievalGeneration["RAG Retrieval & LLM Generation"]
-        Retrieval["Keyword Similarity & Hybrid Search\n(BM25 + Dense Vectors)"]
-        Context["Retrieved Contextual Data\n(Top-K Chunks)"]
-        Prompt["System Prompt &\nGuardrails"]
-        LLM["Azure OpenAI LLM\n(GPT-4o)"]
-        Response["Response\n(with Citations)"]
+        Retrieval["Hybrid Search Engine\n(BM25 + text-embedding-3-small)\n(src/core/search_client.py)"]
+        Context["Retrieved Context Chunks\n(Ranked Top-K with Metadata)"]
+        Prompt["System Prompt & Guardrails\n(src/core/security.py)"]
+        LLM["Azure OpenAI GPT-4o\n(src/core/rag_engine.py)"]
+        Response["Grounded Response\nwith Citations [1][2]"]
 
-        CompanyData -->|"Index Query"| Retrieval
+        CompanyData -->|"Semantic Candidate Match"| Retrieval
         Retrieval --> Context
         Context --> LLM
         Prompt --> LLM
@@ -61,9 +61,9 @@ flowchart TD
     end
 
     %% Interactive Flow Connections
-    Customer -->|"Question"| WebApp
-    WebApp -->|"Search Query"| CompanyData
-    Response -->|"Grounded Answer"| Customer
+    Customer -->|"Question via UI"| WebApp
+    WebApp -->|"Hybrid Query Request"| CompanyData
+    Response -->|"Grounded Answer with Citations"| Customer
 ```
 
 ---
