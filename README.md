@@ -127,7 +127,7 @@ enterprise-travel-rag-assistant/
 
 ### 1. Clone & Set Up Environment
 ```bash
-git clone https://github.com/vallurianand01-commits/enterprise-travel-rag-assistant.git
+git clone https://github.com/valluri-anand/enterprise-travel-rag-assistant.git
 cd enterprise-travel-rag-assistant
 cp .env.example .env
 ```
@@ -208,5 +208,5 @@ Executes security checks, hybrid retrieval, and grounded answer synthesis.
 **Valluri Anand**  
 *AI Engineer @ Accenture | Multi-Agent Systems & Enterprise RAG Architect*  
 - **LinkedIn**: [linkedin.com/in/valluri-anand-8544aa234](https://www.linkedin.com/in/valluri-anand-8544aa234)  
-- **GitHub**: [@vallurianand01-commits](https://github.com/vallurianand01-commits)  
+- **GitHub**: [@valluri-anand](https://github.com/valluri-anand)  
 
