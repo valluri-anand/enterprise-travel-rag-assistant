@@ -181,4 +181,4 @@ Executes security checks, hybrid retrieval, and grounded answer synthesis.
 *AI Engineer @ Accenture | Multi-Agent Systems & Enterprise RAG Architect*  
 - **LinkedIn**: [linkedin.com/in/valluri-anand-8544aa234](https://www.linkedin.com/in/valluri-anand-8544aa234)  
 - **GitHub**: [@vallurianand01-commits](https://github.com/vallurianand01-commits)  
-- **Certifications**: 11x Microsoft Certified Professional
+
